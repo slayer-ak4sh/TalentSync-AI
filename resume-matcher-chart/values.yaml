@@ -1,0 +1,25 @@
+namespace: resume-matcher
+
+postgres:
+  image: postgres:16
+  storage: 1Gi
+  databases: "resumematcher,matchingservice"
+  credentials:
+    user: postgres
+    password: postgres
+
+uploadService:
+  image: upload-service
+  tag: local
+  replicas: 2
+  port: 8081
+
+matchingService:
+  image: matching-service
+  tag: local
+  replicas: 2
+  port: 8082
+  geminiApiUrl: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
+
+# Never commit a real key here — override at install time (see Step 6 below)
+geminiApiKey: ""  # Set via --set geminiApiKey=YOUR_KEY at helm install/upgrade

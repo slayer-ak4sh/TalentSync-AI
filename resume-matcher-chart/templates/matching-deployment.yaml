@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matching-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.matchingService.replicas }}
+  selector:
+    matchLabels:
+      app: matching-service
+  template:
+    metadata:
+      labels:
+        app: matching-service
+    spec:
+      containers:
+        - name: matching-service
+          image: "{{ .Values.matchingService.image }}:{{ .Values.matchingService.tag }}"
+          imagePullPolicy: Never
+          ports:
+            - containerPort: {{ .Values.matchingService.port }}
+          env:
+            - name: DB_HOST
+              value: postgres
+            - name: DB_NAME
+              value: matchingservice
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gemini-secret
+                  key: GEMINI_API_KEY
+            - name: UPLOAD_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: matching-service-config
+                  key: UPLOAD_SERVICE_URL
+            - name: GEMINI_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: matching-service-config
+                  key: GEMINI_API_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.matchingService.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.matchingService.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: matching-service-config
+  namespace: resume-matcher
+data:
+  UPLOAD_SERVICE_URL: "http://upload-service:8081"
+  GEMINI_API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"

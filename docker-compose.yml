@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: resume-postgres
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: resumematcher,matchingservice
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-multi-db.sh:/docker-entrypoint-initdb.d/init-multi-db.sh
+    healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+
+  upload-service:
+    build: ./upload-service
+    container_name: upload-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: resumematcher
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  matching-service:
+    build: ./matching-service
+    container_name: matching-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: matchingservice
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      UPLOAD_SERVICE_URL: http://upload-service:8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

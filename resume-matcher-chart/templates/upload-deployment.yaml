@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upload-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.uploadService.replicas }}
+  selector:
+    matchLabels:
+      app: upload-service
+  template:
+    metadata:
+      labels:
+        app: upload-service
+    spec:
+      containers:
+        - name: upload-service
+          image: "{{ .Values.uploadService.image }}:{{ .Values.uploadService.tag }}"
+          imagePullPolicy: Never
+          ports:
+            - containerPort: {{ .Values.uploadService.port }}
+          env:
+            - name: DB_HOST
+              value: postgres
+            - name: DB_NAME
+              value: resumematcher
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.uploadService.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.uploadService.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
