@@ -31,6 +31,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'maven'
 
       - name: Run tests
         working-directory: ./upload-service
@@ -64,6 +65,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'maven'
 
       - name: Run tests
         working-directory: ./matching-service
@@ -100,6 +102,13 @@ jobs:
     needs: [test-upload-service, test-matching-service, build-frontend]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
 
       - name: Build upload-service image
         run: docker build -t upload-service:ci ./upload-service
